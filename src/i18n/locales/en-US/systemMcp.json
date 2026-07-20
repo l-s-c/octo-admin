@@ -13,7 +13,7 @@
   },
   "empty": "No system MCPs yet. Click \"New\" in the top right.",
   "loadFailed": "Failed to load",
-  "searchPlaceholder": "Search name or summary",
+  "searchPlaceholder": "Search MCPs, tools, or capabilities",
   "actions": {
     "view": "View",
     "edit": "Edit",

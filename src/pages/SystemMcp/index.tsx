@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button, Input, Space as AntSpace, Table, Tag, message } from 'antd'
 import {
   PlusOutlined,
@@ -47,8 +47,10 @@ export default function SystemMcp() {
   })
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<McpDetail | null>(null)
+  const requestVersion = useRef(0)
 
   const load = async (nextPage = page, kw = keyword) => {
+    const version = ++requestVersion.current
     setLoading(true)
     try {
       const resp = await listSystemMcps({
@@ -56,13 +58,15 @@ export default function SystemMcp() {
         limit: PAGE_SIZE,
         offset: (nextPage - 1) * PAGE_SIZE,
       })
+      if (version !== requestVersion.current) return
       setRows(resp.items)
       setTotal(resp.total)
       setPage(nextPage)
     } catch (err) {
+      if (version !== requestVersion.current) return
       message.error(err instanceof ApiError ? err.message : t('loadFailed'))
     } finally {
-      setLoading(false)
+      if (version === requestVersion.current) setLoading(false)
     }
   }
 
@@ -70,6 +74,16 @@ export default function SystemMcp() {
     load(1, '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const kw = pendingKeyword.trim()
+      setKeyword(kw)
+      load(1, kw)
+    }, 300)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingKeyword])
 
   const handleSearch = () => {
     const kw = pendingKeyword.trim()

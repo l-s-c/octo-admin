@@ -13,7 +13,7 @@
   },
   "empty": "还没有系统 MCP，点击右上角「新建」添加",
   "loadFailed": "加载失败",
-  "searchPlaceholder": "搜索名称或简介",
+  "searchPlaceholder": "搜索 MCP、工具或能力",
   "actions": {
     "view": "详情",
     "edit": "编辑",
