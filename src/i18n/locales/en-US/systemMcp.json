@@ -13,7 +13,12 @@
   },
   "empty": "No system MCPs yet. Click \"New\" in the top right.",
   "loadFailed": "Failed to load",
+  "retry": "Retry",
+  "errors": { "auth": "Your session expired. Sign in again.", "forbidden": "You cannot access system MCPs.", "network": "Network connection failed. Retry.", "server": "The service is temporarily unavailable." },
   "searchPlaceholder": "Search MCPs, tools, or capabilities",
+  "filters": { "category": "Category", "transport": "Transport", "verification": "Verification", "clear": "Clear filters" },
+  "verificationOptions": { "verified": "Verified", "unverified": "Unverified", "error": "Error" },
+  "sortOptions": { "relevance": "Relevance", "updated": "Recently updated", "verified": "Recently verified" },
   "actions": {
     "view": "View",
     "edit": "Edit",
