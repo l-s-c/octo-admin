@@ -132,6 +132,10 @@ export interface CreateMcpParams {
 export interface ListMcpParams {
   keyword?: string
   category?: string
+  categories?: string[]
+  transports?: McpTransport[]
+  verificationStatuses?: string[]
+  sort?: string
   limit?: number
   offset?: number
 }
@@ -174,9 +178,13 @@ export async function listSystemMcps(
   const query: Record<string, unknown> = {}
   const keyword = params.keyword?.trim()
   if (keyword) query.keyword = keyword
-  query.category = params.category ?? 'all'
-  if (params.limit && params.limit > 0) query.limit = params.limit
-  if (params.offset && params.offset > 0) query.offset = params.offset
+  query.category = params.categories?.length ? params.categories : (params.category ?? 'all')
+  if (params.transports?.length) query.transport = params.transports
+  if (params.verificationStatuses?.length) query.verification_status = params.verificationStatuses
+  if (params.sort) query.sort = params.sort
+  const pageSize = params.limit && params.limit > 0 ? params.limit : 20
+  query.page_size = pageSize
+  query.page = Math.floor((params.offset ?? 0) / pageSize) + 1
   const resp = await mcpApi.get<ListMcpResponse>('/admin/mcps', {
     params: query,
   })

@@ -13,7 +13,12 @@
   },
   "empty": "还没有系统 MCP，点击右上角「新建」添加",
   "loadFailed": "加载失败",
-  "searchPlaceholder": "搜索名称或简介",
+  "retry": "重试",
+  "errors": { "auth": "登录已失效，请重新登录", "forbidden": "无权访问系统 MCP", "network": "网络连接失败，请重试", "server": "服务暂时不可用，请稍后重试" },
+  "searchPlaceholder": "搜索 MCP、工具或能力",
+  "filters": { "category": "分类", "transport": "传输方式", "verification": "验证状态", "clear": "清空筛选" },
+  "verificationOptions": { "verified": "已验证", "unverified": "未验证", "error": "异常" },
+  "sortOptions": { "relevance": "相关度", "updated": "最近更新", "verified": "最近验证" },
   "actions": {
     "view": "详情",
     "edit": "编辑",

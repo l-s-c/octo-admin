@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Button, Input, Space as AntSpace, Table, Tag, message } from 'antd'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Alert, Button, Input, Select, Space as AntSpace, Table, Tag } from 'antd'
 import {
   PlusOutlined,
   ReloadOutlined,
@@ -38,8 +38,13 @@ export default function SystemMcp() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [keyword, setKeyword] = useState('')
   const [pendingKeyword, setPendingKeyword] = useState('')
+  const [categories, setCategories] = useState<string[]>([])
+  const [transports, setTransports] = useState<string[]>([])
+  const [verificationStatuses, setVerificationStatuses] = useState<string[]>([])
+  const [sort, setSort] = useState('relevance')
 
   const [drawer, setDrawer] = useState<{ open: boolean; id: string | null }>({
     open: false,
@@ -47,22 +52,33 @@ export default function SystemMcp() {
   })
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<McpDetail | null>(null)
+  const requestVersion = useRef(0)
 
   const load = async (nextPage = page, kw = keyword) => {
+    const version = ++requestVersion.current
     setLoading(true)
+    setLoadError(null)
     try {
       const resp = await listSystemMcps({
         keyword: kw,
+        categories,
+        transports: transports as never[],
+        verificationStatuses,
+        sort,
         limit: PAGE_SIZE,
         offset: (nextPage - 1) * PAGE_SIZE,
       })
+      if (version !== requestVersion.current) return
       setRows(resp.items)
       setTotal(resp.total)
       setPage(nextPage)
     } catch (err) {
-      message.error(err instanceof ApiError ? err.message : t('loadFailed'))
+      if (version !== requestVersion.current) return
+      const status = err instanceof ApiError ? err.status : undefined
+      setRows([])
+      setLoadError(status === 401 ? t('errors.auth') : status === 403 ? t('errors.forbidden') : status && status >= 500 ? t('errors.server') : t('errors.network'))
     } finally {
-      setLoading(false)
+      if (version === requestVersion.current) setLoading(false)
     }
   }
 
@@ -70,6 +86,21 @@ export default function SystemMcp() {
     load(1, '')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const kw = pendingKeyword.trim()
+      setKeyword(kw)
+      load(1, kw)
+    }, 300)
+    return () => window.clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingKeyword])
+
+  useEffect(() => {
+    load(1, keyword)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories.join(','), transports.join(','), verificationStatuses.join(','), sort])
 
   const handleSearch = () => {
     const kw = pendingKeyword.trim()
@@ -208,6 +239,11 @@ export default function SystemMcp() {
           onBlur={handleSearch}
           style={{ width: 280 }}
         />
+        <Select mode="multiple" allowClear placeholder={t('filters.category')} value={categories} onChange={(v) => { setCategories(v); setPage(1) }} options={['dev','data','search','productivity','ai','other'].map((value) => ({ value, label: t(`categoryOptions.${value}`) }))} style={{ minWidth: 180 }} />
+        <Select mode="multiple" allowClear placeholder={t('filters.transport')} value={transports} onChange={(v) => { setTransports(v); setPage(1) }} options={['stdio','streamable-http','sse'].map((value) => ({ value, label: t(`transportOptions.${value}`) }))} style={{ minWidth: 180 }} />
+        <Select mode="multiple" allowClear placeholder={t('filters.verification')} value={verificationStatuses} onChange={(v) => { setVerificationStatuses(v); setPage(1) }} options={['verified','unverified','error'].map((value) => ({ value, label: t(`verificationOptions.${value}`) }))} style={{ minWidth: 160 }} />
+        <Select value={sort} onChange={setSort} options={['relevance','updated','verified'].map((value) => ({ value, label: t(`sortOptions.${value}`) }))} style={{ width: 150 }} />
+        <Button onClick={() => { setCategories([]); setTransports([]); setVerificationStatuses([]); setSort('relevance') }}>{t('filters.clear')}</Button>
         <div className="toolbar-spacer" />
         <Button
           icon={<ReloadOutlined />}
@@ -226,7 +262,7 @@ export default function SystemMcp() {
         loading={loading}
         columns={columns}
         dataSource={rows}
-        locale={{ emptyText: t('empty') }}
+        locale={{ emptyText: loadError ? <Alert type="error" showIcon message={loadError} action={<Button size="small" onClick={() => load(page, keyword)}>{t('retry')}</Button>} /> : t('empty') }}
         onRow={(r) => ({
           onClick: () => openDetail(r.id),
           style: { cursor: 'pointer' },
